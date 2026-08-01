@@ -4,6 +4,8 @@
 运行：streamlit run app.py
 """
 
+import os
+
 import streamlit as st
 
 from dotenv import load_dotenv
@@ -53,19 +55,29 @@ st.caption(
 )
 
 EXAMPLES = {
-    "— 自定义输入 —": "",
-    "老字号茶馆 · 面向年轻人的主题活动": "为一个老字号茶馆策划一场面向年轻人的主题活动",
-    "地方小吃 IP 与短视频传播": "给家乡的一种地方小吃设计 IP 形象和短视频传播方案",
-    "AI 时代的普通人生存指南播客": "想做一档“AI 时代的普通人生存指南”播客，怎么起步",
+    "— 自定义输入 —": None,
+    "老字号茶馆 · 面向年轻人的主题活动": {
+        "input": "为一个老字号茶馆策划一场面向年轻人的主题活动",
+        "output_file": os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "examples", "laozihao_v4.md"
+        ),
+    },
 }
 
+
+@st.cache_data
+def load_example_output(path):
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
 example_label = st.selectbox(
-    "示例案例（选一个，点“填入此示例”即可开始）",
+    "示例案例（选择后自动填入输入框，并在下方展示该案例的分析结果）",
     list(EXAMPLES.keys()),
-    help="内置演示案例：老字号茶馆策划案是产品实测迭代四轮的演示主案例。",
 )
-if st.button("填入此示例", key="fill_example") and EXAMPLES[example_label]:
-    st.session_state["idea_input"] = EXAMPLES[example_label]
+selected_example = EXAMPLES[example_label]
+if selected_example is not None:
+    st.session_state["idea_input"] = selected_example["input"]
 
 idea = st.text_area(
     "你的创意想法（越具体越好）",
@@ -73,6 +85,14 @@ idea = st.text_area(
     height=100,
     placeholder="例如：给家乡的一种地方小吃设计 IP 形象和短视频传播方案……",
 )
+
+if selected_example is not None:
+    st.divider()
+    st.markdown(
+        f"**📄 示例分析结果**（演示主案例：{example_label}；"
+        "产品实测迭代四轮后定稿。也可在下方标签页用“一键生成”实时重新生成）"
+    )
+    st.markdown(load_example_output(selected_example["output_file"]))
 
 tabs = st.tabs([m["tab"] for m in MODULES] + ["完整策划案"])
 tab_list = list(tabs)
