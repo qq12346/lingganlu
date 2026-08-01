@@ -52,8 +52,24 @@ st.caption(
     "本质拆解 → 价值判断 → 场景验证 → 执行路径。"
 )
 
+EXAMPLES = {
+    "— 自定义输入 —": "",
+    "老字号茶馆 · 面向年轻人的主题活动": "为一个老字号茶馆策划一场面向年轻人的主题活动",
+    "地方小吃 IP 与短视频传播": "给家乡的一种地方小吃设计 IP 形象和短视频传播方案",
+    "AI 时代的普通人生存指南播客": "想做一档“AI 时代的普通人生存指南”播客，怎么起步",
+}
+
+example_label = st.selectbox(
+    "示例案例（选一个，点“填入此示例”即可开始）",
+    list(EXAMPLES.keys()),
+    help="内置演示案例：老字号茶馆策划案是产品实测迭代四轮的演示主案例。",
+)
+if st.button("填入此示例", key="fill_example") and EXAMPLES[example_label]:
+    st.session_state["idea_input"] = EXAMPLES[example_label]
+
 idea = st.text_area(
     "你的创意想法（越具体越好）",
+    key="idea_input",
     height=100,
     placeholder="例如：给家乡的一种地方小吃设计 IP 形象和短视频传播方案……",
 )
