@@ -71,8 +71,21 @@ def load_example_output(path):
         return f.read()
 
 
+def apply_example_outputs(path):
+    """把示例文件的四段内容填充到各模块标签页（即分析原本出现的位置）。"""
+    content = load_example_output(path)
+    markers = [(f"## {i}. {m['title']}", m["key"]) for i, m in enumerate(MODULES, start=1)]
+    for idx, (marker, key) in enumerate(markers):
+        start = content.find(marker)
+        if start == -1:
+            continue
+        start += len(marker)
+        end = content.find(markers[idx + 1][0], start) if idx + 1 < len(markers) else len(content)
+        st.session_state[f"out_{key}"] = content[start:end].strip()
+
+
 example_label = st.selectbox(
-    "示例案例（选择后自动填入输入框，并在下方展示该案例的分析结果）",
+    "示例案例（选择后自动填入输入框，并载入该案例的分析结果）",
     list(EXAMPLES.keys()),
 )
 selected_example = EXAMPLES[example_label]
@@ -87,12 +100,8 @@ idea = st.text_area(
 )
 
 if selected_example is not None:
-    st.divider()
-    st.markdown(
-        f"**📄 示例分析结果**（演示主案例：{example_label}；"
-        "产品实测迭代四轮后定稿。也可在下方标签页用“一键生成”实时重新生成）"
-    )
-    st.markdown(load_example_output(selected_example["output_file"]))
+    apply_example_outputs(selected_example["output_file"])
+    st.caption(f"已载入示例分析结果（{example_label}，产品实测迭代四轮后定稿），见下方各标签页；也可以点“一键生成”实时重新生成。")
 
 tabs = st.tabs([m["tab"] for m in MODULES] + ["完整策划案"])
 tab_list = list(tabs)
