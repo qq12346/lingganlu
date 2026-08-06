@@ -11,6 +11,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 import llm_client as llm
+from materials import collect_materials
 from prompts import MODULES
 
 load_dotenv()
@@ -42,7 +43,7 @@ with st.sidebar:
         help=f"在 {cfg['hint']} 创建 API Key 后填入。",
     )
     model = st.selectbox("模型", cfg["models"], index=0)
-    temperature = st.slider("创造性（temperature）", 0.0, 1.5, 0.8, 0.1)
+    temperature = st.slider("创造性（temperature）", 0.0, 1.5, 0.6, 0.1)
     st.markdown(
         f"还没有 Key？去 [{cfg['hint']}](https://{cfg['hint']}) 注册开发者账号。"
     )
@@ -89,7 +90,10 @@ example_label = st.selectbox(
     list(EXAMPLES.keys()),
 )
 selected_example = EXAMPLES[example_label]
-if selected_example is not None:
+# 仅在切换示例时载入（避免生成后的 rerun 把新结果覆盖回示例内容）
+example_changed = st.session_state.get("_loaded_example") != example_label
+if selected_example is not None and example_changed:
+    st.session_state["_loaded_example"] = example_label
     st.session_state["idea_input"] = selected_example["input"]
 
 idea = st.text_area(
@@ -100,15 +104,45 @@ idea = st.text_area(
 )
 
 if selected_example is not None:
-    apply_example_outputs(selected_example["output_file"])
+    if example_changed:
+        apply_example_outputs(selected_example["output_file"])
     st.caption(f"已载入示例分析结果（{example_label}，产品实测迭代四轮后定稿），见下方各标签页；也可以点“一键生成”实时重新生成。")
+
+# ---------------- 项目资料上传 ----------------
+st.markdown("**📁 项目资料（可选）**")
+uploaded_files = st.file_uploader(
+    "上传与想法相关的资料——支持多选（md / txt / pdf / docx），或上传整理好的 ZIP 压缩包",
+    type=["md", "markdown", "txt", "pdf", "docx", "zip"],
+    accept_multiple_files=True,
+    help="点击后弹出系统文件对话框；进入文件夹后 Cmd+A 可全选。资料会作为策划依据注入分析，避免 AI 凭空编造细节。",
+)
+if uploaded_files:
+    fingerprint = "|".join(f"{f.name}:{f.size}" for f in uploaded_files)
+    if st.session_state.get("_materials_fp") != fingerprint:
+        with st.spinner("正在解析资料…"):
+            materials_text, materials_summary = collect_materials(uploaded_files)
+        st.session_state["_materials_fp"] = fingerprint
+        st.session_state["materials_text"] = materials_text
+        st.session_state["materials_summary"] = materials_summary
+    included = [s for s in st.session_state.get("materials_summary", []) if not s[2]]
+    dropped = [s for s in st.session_state.get("materials_summary", []) if s[2]]
+    if included:
+        names = "、".join(s[0] for s in included[:8]) + ("……" if len(included) > 8 else "")
+        st.caption(f"✅ 已加载 {len(included)} 份资料：{names}")
+    if dropped:
+        st.caption(f"⚠️ {len(dropped)} 份因总长度超限未纳入：" + "、".join(s[0] for s in dropped[:5]))
+else:
+    st.session_state.pop("_materials_fp", None)
+    st.session_state.pop("materials_text", None)
+    st.session_state.pop("materials_summary", None)
+materials_text = st.session_state.get("materials_text", "")
 
 tabs = st.tabs([m["tab"] for m in MODULES] + ["完整策划案"])
 tab_list = list(tabs)
 
 
-def run_module(module, current_idea):
-    """运行单个模块，若前置模块未生成则自动补齐。"""
+def run_module(module, current_idea, slot=None):
+    """运行单个模块，若前置模块未生成则自动补齐。slot 非空时流式输出到该占位符。"""
     ctx_parts = []
     for prev in MODULES:
         if prev["key"] == module["key"]:
@@ -120,10 +154,14 @@ def run_module(module, current_idea):
         ctx_parts.append(prev_out)
     ctx = "\n\n".join(ctx_parts)
 
-    with st.spinner(f"正在生成：{module['title']} …（约 30-90 秒）"):
-        client = llm.build_client(api_key, base_url=cfg["base_url"])
-        user_prompt = module["user"](current_idea, ctx)
-        result = llm.chat(client, model, module["system"], user_prompt, temperature)
+    client = llm.build_client(api_key, base_url=cfg["base_url"])
+    user_prompt = module["user"](current_idea, ctx, materials_text)
+    if slot is not None:
+        stream = llm.chat_stream(client, model, module["system"], user_prompt, temperature)
+        result = slot.write_stream(stream) or ""
+    else:
+        with st.spinner(f"正在生成：{module['title']} …（约 30-90 秒）"):
+            result = llm.chat(client, model, module["system"], user_prompt, temperature)
     st.session_state[f"out_{module['key']}"] = result
     return result
 
@@ -133,26 +171,40 @@ def require_idea():
         st.error("请先在上方输入你的创意想法。")
         return False
     if not api_key:
-        st.error("请先在左侧侧边栏填写 MiniMax API Key。")
+        st.error(f"请先在左侧侧边栏填写 {provider} API Key。")
         return False
     return True
-
-
-def safe_run(module, slot):
-    if not require_idea():
-        return
-    try:
-        result = run_module(module, idea.strip())
-        slot.markdown(result)
-    except Exception as exc:  # noqa: BLE001
-        st.error(f"生成失败：{exc}\n\n请检查 API Key、模型名与网络后重试。")
 
 
 for idx, module in enumerate(MODULES):
     with tab_list[idx]:
         st.subheader(module["title"])
+        trigger_key = f"trigger_{module['key']}"
+        error_key = f"error_{module['key']}"
         if st.button("生成此模块", key=f"btn_{module['key']}", use_container_width=True):
-            safe_run(module, st)
+            st.session_state[trigger_key] = True
+
+        if st.session_state.get(trigger_key):
+            st.session_state[trigger_key] = False
+            if require_idea():
+                # 清空旧结果，避免流式输出时下方残留上一版内容
+                st.session_state[f"out_{module['key']}"] = ""
+                st.session_state.pop(error_key, None)
+                try:
+                    run_module(module, idea.strip(), slot=st.empty())
+                except Exception as exc:  # noqa: BLE001
+                    st.session_state[error_key] = str(exc)
+                st.rerun()
+
+        if st.session_state.get(error_key):
+            st.error(
+                f"生成失败：{st.session_state[error_key]}\n\n"
+                "请检查 API Key、模型名与网络后重试。"
+            )
+            if st.button("🔄 重试此模块", key=f"retry_{module['key']}", use_container_width=True):
+                st.session_state[trigger_key] = True
+                st.rerun()
+
         out = st.session_state.get(f"out_{module['key']}", "")
         if out:
             st.markdown(out)
@@ -161,13 +213,42 @@ for idx, module in enumerate(MODULES):
 with tab_list[4]:
     st.subheader("完整策划案（一键生成四步）")
     if st.button("一键生成完整策划案", key="btn_all", use_container_width=True):
+        st.session_state["trigger_all"] = True
+
+    if st.session_state.get("trigger_all"):
+        st.session_state["trigger_all"] = False
         if require_idea():
+            progress = st.progress(0.0, text="准备开始…")
+            # 清空旧结果，避免下方残留上一版
+            for m in MODULES:
+                st.session_state[f"out_{m['key']}"] = ""
+            st.session_state.pop("all_done", None)
             try:
-                for module in MODULES:
-                    run_module(module, idea.strip())
-                st.success("完整策划案已生成，见下方。")
+                for i, module in enumerate(MODULES):
+                    progress.progress(
+                        i / len(MODULES),
+                        text=f"正在生成 {i + 1}/{len(MODULES)}：{module['tab']}（实时流式输出）",
+                    )
+                    st.markdown(f"### {module['title']}")
+                    run_module(module, idea.strip(), slot=st.empty())
+                progress.progress(1.0, text="四步全部生成完成")
+                st.session_state["all_done"] = True
+                st.session_state.pop("error_all", None)
             except Exception as exc:  # noqa: BLE001
-                st.error(f"生成失败：{exc}\n\n请检查 API Key、模型名与网络后重试。")
+                st.session_state["error_all"] = str(exc)
+            st.rerun()
+
+    if st.session_state.get("error_all"):
+        st.error(
+            f"生成失败：{st.session_state['error_all']}\n\n"
+            "请检查 API Key、模型名与网络后重试。"
+        )
+        if st.button("🔄 重试完整生成", key="retry_all", use_container_width=True):
+            st.session_state["trigger_all"] = True
+            st.rerun()
+
+    if st.session_state.get("all_done"):
+        st.success("完整策划案已生成，见下方。")
 
     outputs = {m["key"]: st.session_state.get(f"out_{m['key']}", "") for m in MODULES}
     if all(outputs.values()):
