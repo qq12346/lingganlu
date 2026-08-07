@@ -55,13 +55,14 @@ st.caption(
     "本质拆解 → 价值判断 → 场景验证 → 执行路径。"
 )
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 EXAMPLES = {
     "— 自定义输入 —": None,
     "老字号茶馆 · 面向年轻人的主题活动": {
         "input": "为一个老字号茶馆策划一场面向年轻人的主题活动",
-        "output_file": os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "examples", "laozihao_v4.md"
-        ),
+        "output_file": os.path.join(BASE_DIR, "examples", "laozihao_v4.md"),
+        "materials_file": os.path.join(BASE_DIR, "examples", "老字号茶馆资料库.md"),
     },
 }
 
@@ -85,6 +86,21 @@ def apply_example_outputs(path):
         st.session_state[f"out_{key}"] = content[start:end].strip()
 
 
+def load_example_materials(example):
+    """载入示例自带的项目资料；未指定或文件缺失时清空示例资料。"""
+    path = example.get("materials_file") if example else None
+    if not path or not os.path.exists(path):
+        st.session_state.pop("_materials_fp", None)
+        st.session_state.pop("materials_text", None)
+        st.session_state.pop("materials_summary", None)
+        return
+    with open(path, encoding="utf-8") as f:
+        text = f.read().strip()
+    st.session_state["_materials_fp"] = f"__example__:{os.path.basename(path)}"
+    st.session_state["materials_text"] = text
+    st.session_state["materials_summary"] = [(os.path.basename(path), len(text), False)]
+
+
 example_label = st.selectbox(
     "示例案例（选择后自动填入输入框，并载入该案例的分析结果）",
     list(EXAMPLES.keys()),
@@ -95,6 +111,7 @@ example_changed = st.session_state.get("_loaded_example") != example_label
 if selected_example is not None and example_changed:
     st.session_state["_loaded_example"] = example_label
     st.session_state["idea_input"] = selected_example["input"]
+    load_example_materials(selected_example)
 
 idea = st.text_area(
     "你的创意想法（越具体越好）",
@@ -106,7 +123,14 @@ idea = st.text_area(
 if selected_example is not None:
     if example_changed:
         apply_example_outputs(selected_example["output_file"])
-    st.caption(f"已载入示例分析结果（{example_label}，产品实测迭代四轮后定稿），见下方各标签页；也可以点“一键生成”实时重新生成。")
+    mats_note = ""
+    if selected_example.get("materials_file") and os.path.exists(
+        selected_example["materials_file"]
+    ):
+        mats_note = "；已同时载入示例项目资料《老字号茶馆资料库》，一键生成时会引用其中的真实案例与数据"
+    st.caption(
+        f"已载入示例分析结果（{example_label}，产品实测迭代四轮后定稿）{mats_note}；也可以点“一键生成”实时重新生成。"
+    )
 
 # ---------------- 项目资料上传 ----------------
 st.markdown("**📁 项目资料（可选）**")
@@ -124,17 +148,31 @@ if uploaded_files:
         st.session_state["_materials_fp"] = fingerprint
         st.session_state["materials_text"] = materials_text
         st.session_state["materials_summary"] = materials_summary
-    included = [s for s in st.session_state.get("materials_summary", []) if not s[2]]
-    dropped = [s for s in st.session_state.get("materials_summary", []) if s[2]]
-    if included:
-        names = "、".join(s[0] for s in included[:8]) + ("……" if len(included) > 8 else "")
-        st.caption(f"✅ 已加载 {len(included)} 份资料：{names}")
-    if dropped:
-        st.caption(f"⚠️ {len(dropped)} 份因总长度超限未纳入：" + "、".join(s[0] for s in dropped[:5]))
 else:
-    st.session_state.pop("_materials_fp", None)
-    st.session_state.pop("materials_text", None)
-    st.session_state.pop("materials_summary", None)
+    # 未上传文件时：若当前示例自带项目资料，恢复示例资料；否则清空
+    example_mats = selected_example.get("materials_file") if selected_example else None
+    want_fp = (
+        f"__example__:{os.path.basename(example_mats)}"
+        if example_mats and os.path.exists(example_mats)
+        else None
+    )
+    if want_fp:
+        if st.session_state.get("_materials_fp") != want_fp:
+            load_example_materials(selected_example)
+    else:
+        st.session_state.pop("_materials_fp", None)
+        st.session_state.pop("materials_text", None)
+        st.session_state.pop("materials_summary", None)
+
+included = [s for s in st.session_state.get("materials_summary", []) if not s[2]]
+dropped = [s for s in st.session_state.get("materials_summary", []) if s[2]]
+if included:
+    names = "、".join(s[0] for s in included[:8]) + ("……" if len(included) > 8 else "")
+    is_example = str(st.session_state.get("_materials_fp", "")).startswith("__example__:")
+    suffix = "（示例自带，上传自己的资料可替换）" if is_example else ""
+    st.caption(f"✅ 已加载 {len(included)} 份资料：{names}{suffix}")
+if dropped:
+    st.caption(f"⚠️ {len(dropped)} 份因总长度超限未纳入：" + "、".join(s[0] for s in dropped[:5]))
 materials_text = st.session_state.get("materials_text", "")
 
 tabs = st.tabs([m["tab"] for m in MODULES] + ["完整策划案"])
