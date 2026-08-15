@@ -3,3 +3,9 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# 本地视觉验证脚本（引用本机绝对路径，不上库）
+shot.js
+shot_result.js
+verify_content.js
+verify_content2.js

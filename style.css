@@ -1,0 +1,538 @@
+/* ============================================================
+   灵感落 · 东方雅致主题
+   与 Ardot 设计稿「灵感落-UI设计稿」一一对应：
+   宣纸底色 / 墨色文字 / 朱砂点缀 / 琥珀判断 / 石绿通过
+   标题：Noto Serif SC（宋体气质）；正文：Noto Sans SC
+   ============================================================ */
+
+:root {
+  --paper: #F4EFE3;          /* 宣纸底 */
+  --card: #FBF8F0;           /* 卡片底 */
+  --side: #EFE8D8;           /* 侧栏底 */
+  --paper-white: #FFFDF8;    /* 纸白 */
+  --ink: #2C2A26;            /* 深墨 */
+  --ink-2: #6E675C;          /* 中墨 */
+  --ink-3: #A39B8C;          /* 淡墨 */
+  --vermillion: #C23B2E;     /* 朱砂 */
+  --vermillion-dark: #A93226;/* 朱砂深 */
+  --vermillion-tint: #F4E3DE;/* 朱砂淡 */
+  --amber: #B07D3A;          /* 琥珀 */
+  --amber-tint: #F7ECDC;     /* 琥珀淡 */
+  --green: #4F7A5E;          /* 石绿 */
+  --green-tint: #E9F0EB;     /* 石绿淡 */
+  --line: #E3DAC7;           /* 边线 */
+  --hairline: #DED5C2;       /* 发丝 */
+
+  --font-serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --font-sans: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+/* ---------- 全局 ---------- */
+
+html, body, .stApp {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+.stApp [data-testid="stHeader"] {
+  background: transparent;
+  height: 2.5rem;
+}
+
+.stApp [data-testid="stAppViewContainer"] > .main .block-container {
+  max-width: 1080px;
+  padding-top: 2rem;
+  padding-bottom: 3rem;
+}
+
+::selection {
+  background: var(--vermillion-tint);
+}
+
+/* ---------- 标题与正文 ---------- */
+
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3,
+.stMarkdown h4 {
+  font-family: var(--font-serif);
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.stMarkdown p, .stMarkdown li {
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+[data-testid="stCaptionContainer"] p {
+  color: var(--ink-3);
+  font-size: 0.78rem;
+}
+
+/* ---------- Hero（app.py 注入的 HTML 块） ---------- */
+
+.hero {
+  text-align: center;
+  padding: 2.5rem 0 2rem;
+}
+
+.hero-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.hero-eyebrow .line {
+  width: 36px;
+  height: 1px;
+  background: var(--line);
+}
+
+.hero-eyebrow .eyebrow-text {
+  color: var(--vermillion);
+  font-size: 0.85rem;
+  letter-spacing: 0.5em;
+  margin-right: -0.5em; /* 抵消末字间距，保持视觉居中 */
+}
+
+.hero-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 2.75rem;
+  color: var(--ink);
+  margin: 0 0 12px;
+  letter-spacing: 0.04em;
+}
+
+.hero-sub {
+  font-size: 0.95rem;
+  color: var(--ink-2);
+  margin: 0;
+}
+
+/* ---------- 四框架流程条 ---------- */
+
+.framework-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 2.25rem;
+}
+
+.framework-card {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.framework-card .seal {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  background: var(--vermillion);
+  color: #FFFFFF;
+  border-radius: 2px;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fc-title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.fc-desc {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.fc-arrow {
+  color: var(--ink-3);
+  flex: 0 0 16px;
+  text-align: center;
+}
+
+/* ---------- 输入组件 ---------- */
+
+/* 标签 */
+[data-testid="stWidgetLabel"] p {
+  color: var(--ink) !important;
+  font-weight: 500;
+  font-size: 0.88rem;
+}
+
+/* 下拉选择（示例案例 / 侧栏）— Streamlit 1.61 React Aria ComboBox */
+[data-testid="stSelectbox"] .react-aria-ComboBox > div[role="group"] {
+  background-color: var(--paper-white);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+[data-testid="stSelectbox"] .react-aria-ComboBox:focus-within > div[role="group"] {
+  border-color: var(--vermillion);
+  box-shadow: 0 0 0 1px var(--vermillion);
+}
+
+[data-testid="stSelectbox"] input[role="combobox"] {
+  color: var(--ink);
+  font-size: 0.85rem;
+  background: transparent;
+}
+
+/* 下拉弹层（React Aria Listbox，portal 渲染） */
+[role="listbox"] {
+  background: var(--card) !important;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+[role="listbox"] [role="option"] {
+  color: var(--ink);
+  font-size: 0.85rem;
+  padding: 8px 12px;
+}
+
+[role="listbox"] [role="option"][data-focused="true"] {
+  background: var(--vermillion-tint);
+}
+
+[role="listbox"] [role="option"][data-selected="true"] {
+  color: var(--vermillion);
+  font-weight: 500;
+}
+
+/* 文本输入（想法输入框） */
+.stTextArea textarea {
+  background: var(--paper-white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink);
+  min-height: 96px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  padding: 12px;
+}
+
+.stTextArea textarea::placeholder {
+  color: var(--ink-3);
+}
+
+.stTextArea textarea:focus {
+  border-color: var(--vermillion);
+  box-shadow: 0 0 0 1px var(--vermillion);
+}
+
+/* 侧栏文本输入（API Key） */
+[data-testid="stSidebar"] .stTextInput input {
+  background: var(--paper-white);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink);
+}
+
+[data-testid="stSidebar"] .stTextInput input:focus {
+  border-color: var(--vermillion);
+  box-shadow: 0 0 0 1px var(--vermillion);
+}
+
+/* 文件上传区 */
+[data-testid="stFileUploaderDropzone"] {
+  background: var(--paper-white);
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+
+[data-testid="stFileUploaderDropzone"]:hover {
+  border-color: var(--vermillion);
+  background: var(--vermillion-tint);
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"] span {
+  color: var(--ink-2);
+  font-size: 0.82rem;
+}
+
+/* 滑杆（创造性）— 拇指朱砂 */
+[data-testid="stSlider"] [role="slider"] {
+  background-color: var(--vermillion) !important;
+}
+
+/* ---------- 按钮 ---------- */
+
+/* 主按钮：朱砂底白字 */
+.stApp [data-testid="stBaseButton-primary"] {
+  background: var(--vermillion);
+  color: #FFFFFF;
+  border: 1px solid var(--vermillion);
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  padding: 0.55rem 1.1rem;
+  box-shadow: 0 2px 8px rgba(194, 59, 46, 0.18);
+}
+
+.stApp [data-testid="stBaseButton-primary"]:hover {
+  background: var(--vermillion-dark);
+  border-color: var(--vermillion-dark);
+  color: #FFFFFF;
+}
+
+/* 次按钮：墨色描边 */
+.stApp [data-testid="stBaseButton-secondary"] {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  padding: 0.55rem 1.1rem;
+}
+
+.stApp [data-testid="stBaseButton-secondary"]:hover {
+  border-color: var(--vermillion);
+  color: var(--vermillion);
+  background: var(--vermillion-tint);
+}
+
+/* 下载按钮（主操作） */
+[data-testid="stDownloadButton"] button {
+  background: var(--vermillion);
+  color: #FFFFFF;
+  border: 1px solid var(--vermillion);
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+[data-testid="stDownloadButton"] button:hover {
+  background: var(--vermillion-dark);
+  color: #FFFFFF;
+}
+
+/* ---------- 标签页（四模块 + 完整策划案）— React Aria Tabs ---------- */
+
+[data-testid="stTabs"] [role="tablist"] {
+  gap: 24px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+[data-testid="stTabs"] [data-testid="stTab"] {
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+  padding: 0 0 10px;
+}
+
+[data-testid="stTabs"] [data-testid="stTab"][aria-selected="true"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* 激活下划线（朱砂） */
+[data-testid="stTabs"] [data-testid="stTab"] .react-aria-SelectionIndicator {
+  background-color: var(--vermillion) !important;
+  height: 2px !important;
+}
+
+/* 模块小标题（st.subheader → h3） */
+.stMarkdown h3 {
+  font-size: 1.15rem;
+  margin-top: 0.25rem;
+}
+
+/* 生成内容的小节标题（h2）：发丝分隔 + 留白，避免长文段落粘连 */
+.stTabs .stMarkdown h2 {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--hairline);
+  font-size: 1.05rem;
+}
+
+/* 模块内主按钮收敛宽度，更精致 */
+.stTabs [data-testid="stBaseButton-primary"] {
+  width: auto !important;
+  min-width: 200px;
+  max-width: 320px;
+}
+
+/* ---------- 提示条（成功/警告/错误/信息） ---------- */
+
+.stAlert {
+  border-radius: 4px;
+  font-family: var(--font-sans);
+}
+
+[data-testid="stAlert"][kind="success"] {
+  background: var(--green-tint);
+  border: 1px solid var(--green);
+}
+
+[data-testid="stAlert"][kind="success"] * {
+  color: var(--green);
+}
+
+[data-testid="stAlert"][kind="error"] {
+  background: var(--vermillion-tint);
+  border: 1px solid var(--vermillion);
+}
+
+[data-testid="stAlert"][kind="error"] * {
+  color: var(--vermillion-dark);
+}
+
+[data-testid="stAlert"][kind="warning"] {
+  background: var(--amber-tint);
+  border: 1px solid var(--amber);
+}
+
+[data-testid="stAlert"][kind="warning"] * {
+  color: var(--amber);
+}
+
+[data-testid="stAlert"][kind="info"] {
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+
+[data-testid="stAlert"][kind="info"] * {
+  color: var(--ink-2);
+}
+
+/* ---------- 进度条 ---------- */
+
+.stProgress > div > div > div > div {
+  background-color: var(--vermillion);
+}
+
+/* ---------- 侧边栏（设置面板） ---------- */
+
+[data-testid="stSidebar"] {
+  background: var(--side);
+  border-right: 1px solid var(--hairline);
+}
+
+[data-testid="stSidebar"] .stMarkdown h1,
+[data-testid="stSidebar"] .stMarkdown h2,
+[data-testid="stSidebar"] .stMarkdown h3 {
+  font-family: var(--font-serif);
+  color: var(--ink);
+}
+
+/* 侧栏品牌区 */
+.side-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 16px;
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: 8px;
+}
+
+.seal-sm {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  background: var(--vermillion);
+  color: #FFFFFF;
+  border-radius: 3px;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 3px;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0;
+}
+
+.side-brand-name {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.side-brand-tag {
+  font-size: 0.72rem;
+  color: var(--ink-2);
+  margin-top: 2px;
+}
+
+/* 侧栏链接文字（去注册提示） */
+[data-testid="stSidebar"] a {
+  color: var(--vermillion);
+  text-decoration: none;
+}
+
+/* ---------- 方法论四卡 ---------- */
+
+.method-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 2.5rem;
+}
+
+.method-title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--ink);
+  margin: 0 0 16px;
+}
+
+.method-item {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.mi-title {
+  font-weight: 500;
+  font-size: 0.88rem;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.mi-desc {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+/* ---------- 页脚 ---------- */
+
+.app-footer {
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  margin-top: 2.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--hairline);
+}
+
+/* ---------- 生成中的流式输出区 ---------- */
+
+.stSpinner {
+  color: var(--vermillion);
+}

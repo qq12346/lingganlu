@@ -26,6 +26,18 @@ streamlit run app.py
 
 浏览器会自动打开 `http://localhost:8501`，在左侧选择模型服务商并填入 API Key 即可使用。
 
+## Docker 部署（本地验证用，OrbStack）
+
+```bash
+cd 灵感落
+docker build -t lingganlu:latest .
+docker run -d --name lingganlu -p 8501:8501 --restart unless-stopped lingganlu:latest
+```
+
+> 更新代码后重新部署：`docker build -t lingganlu:latest . && docker stop lingganlu && docker rm lingganlu && docker run -d --name lingganlu -p 8501:8501 --restart unless-stopped lingganlu:latest`
+
+主题样式在 `style.css`（东方雅致：宣纸底 / 墨色 / 朱砂，与设计稿一一对应），`app.py` 通过 `inject_theme()` 注入。
+
 ## 模型服务商（侧边栏可切换）
 
 | 服务商 | 接入点 | 推荐模型 | 说明 |

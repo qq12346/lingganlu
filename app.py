@@ -18,6 +18,19 @@ load_dotenv()
 
 st.set_page_config(page_title="灵感落 · AI 文创策划助手", page_icon="✨", layout="wide")
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def inject_theme():
+    """注入「东方雅致」主题样式（与设计稿一一对应，见 style.css）。"""
+    css_path = os.path.join(BASE_DIR, "style.css")
+    if os.path.exists(css_path):
+        with open(css_path, encoding="utf-8") as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+
+inject_theme()
+
 # ---------------- 服务商配置 ----------------
 PROVIDERS = {
     "MiniMax": {
@@ -34,7 +47,19 @@ PROVIDERS = {
 
 # ---------------- 侧边栏 ----------------
 with st.sidebar:
-    st.header("⚙️ 设置")
+    st.markdown(
+        """
+<div class="side-brand">
+  <span class="seal-sm">灵感落</span>
+  <div>
+    <div class="side-brand-name">灵感落</div>
+    <div class="side-brand-tag">AI 文创策划助手</div>
+  </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+    st.markdown("#### 设置")
     provider = st.selectbox("模型服务商", list(PROVIDERS.keys()))
     cfg = PROVIDERS[provider]
     api_key = st.text_input(
@@ -49,13 +74,25 @@ with st.sidebar:
     )
 
 # ---------------- 主界面 ----------------
-st.title("✨ 灵感落 · AI 文创策划助手")
-st.caption(
-    "输入一个创意想法，用四套思维框架把它变成可落地的策划案："
-    "本质拆解 → 价值判断 → 场景验证 → 执行路径。"
+st.markdown(
+    """
+<div class="hero">
+  <div class="hero-eyebrow"><span class="line"></span><span class="eyebrow-text">思 · 值 · 决 · 行</span><span class="line"></span></div>
+  <h1 class="hero-title">把灵感，落成事</h1>
+  <p class="hero-sub">输入一个创意想法，四套思维框架帮你拆本质、问价值、验场景、定路径，从想到，到做到。</p>
+</div>
+<div class="framework-row">
+  <div class="framework-card"><span class="seal">思</span><div><div class="fc-title">思 · 第一性原理</div><div class="fc-desc">拆本质：四因拆解，追问隐含假设</div></div></div>
+  <span class="fc-arrow">→</span>
+  <div class="framework-card"><span class="seal">值</span><div><div class="fc-title">值 · 价值追问</div><div class="fc-desc">问价值：值不值得做，底线在哪里</div></div></div>
+  <span class="fc-arrow">→</span>
+  <div class="framework-card"><span class="seal">决</span><div><div class="fc-title">决 · 复杂决策</div><div class="fc-desc">验场景：用概率与最小实验说话</div></div></div>
+  <span class="fc-arrow">→</span>
+  <div class="framework-card"><span class="seal">行</span><div><div class="fc-title">行 · 还原论工程</div><div class="fc-desc">定路径：MVP 边界与死亡清单</div></div></div>
+</div>
+""",
+    unsafe_allow_html=True,
 )
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 EXAMPLES = {
     "— 自定义输入 —": None,
@@ -65,6 +102,11 @@ EXAMPLES = {
         "materials_file": os.path.join(BASE_DIR, "examples", "老字号茶馆资料库.md"),
     },
 }
+
+example_label = st.selectbox(
+    "示例案例（选择后自动填入输入框，并载入该案例的分析结果）",
+    list(EXAMPLES.keys()),
+)
 
 
 @st.cache_data
@@ -101,10 +143,6 @@ def load_example_materials(example):
     st.session_state["materials_summary"] = [(os.path.basename(path), len(text), False)]
 
 
-example_label = st.selectbox(
-    "示例案例（选择后自动填入输入框，并载入该案例的分析结果）",
-    list(EXAMPLES.keys()),
-)
 selected_example = EXAMPLES[example_label]
 # 仅在切换示例时载入（避免生成后的 rerun 把新结果覆盖回示例内容）
 example_changed = st.session_state.get("_loaded_example") != example_label
@@ -219,7 +257,9 @@ for idx, module in enumerate(MODULES):
         st.subheader(module["title"])
         trigger_key = f"trigger_{module['key']}"
         error_key = f"error_{module['key']}"
-        if st.button("生成此模块", key=f"btn_{module['key']}", use_container_width=True):
+        if st.button(
+            "生成此模块", key=f"btn_{module['key']}", use_container_width=True, type="primary"
+        ):
             st.session_state[trigger_key] = True
 
         if st.session_state.get(trigger_key):
@@ -250,7 +290,7 @@ for idx, module in enumerate(MODULES):
 # ---------------- 完整策划案 ----------------
 with tab_list[4]:
     st.subheader("完整策划案（一键生成四步）")
-    if st.button("一键生成完整策划案", key="btn_all", use_container_width=True):
+    if st.button("一键生成完整策划案", key="btn_all", use_container_width=True, type="primary"):
         st.session_state["trigger_all"] = True
 
     if st.session_state.get("trigger_all"):
@@ -304,19 +344,22 @@ with tab_list[4]:
             data=doc.encode("utf-8"),
             file_name="策划案.md",
             mime="text/markdown",
+            type="primary",
         )
         st.markdown(doc)
 
-with st.expander("📖 方法论说明（本项目如何用四套思维框架）"):
-    st.markdown(
-        """
-本项目把四套结构化思维框架编码为 AI 策划工作流：
-
-1. **思 · 第一性原理**：先拆本质与隐含假设，避免"想当然立项"；
-2. **值 · 价值追问**：先回答"值不值得做、什么不该被牺牲"，守住底线；
-3. **决 · 复杂决策**：用概率与最小实验验证假设，不凭感觉下注；
-4. **行 · 还原论工程**：砍到最小可行版本，列出死亡清单与反脆弱设计，让想法真的落地。
-
-文创行业"灵感多、落地少"的痛点，本质上是缺少这套"从想到做"的结构化方法。
-"""
-    )
+st.markdown(
+    """
+<div>
+  <div class="method-title">为什么是「思 · 值 · 决 · 行」</div>
+  <div class="method-grid">
+    <div class="method-item"><div class="mi-title">思 · 拆本质</div><div class="mi-desc">想法不清：先拆四因与隐含假设，避免想当然立项</div></div>
+    <div class="method-item"><div class="mi-title">值 · 问价值</div><div class="mi-desc">盲目立项：先回答值不值得做、什么不该被牺牲</div></div>
+    <div class="method-item"><div class="mi-title">决 · 验场景</div><div class="mi-desc">自嗨验证：用概率和最小实验替代拍脑袋下注</div></div>
+    <div class="method-item"><div class="mi-title">行 · 定路径</div><div class="mi-desc">纸上谈兵：MVP 边界、死亡清单、反脆弱与 7 天计划</div></div>
+  </div>
+</div>
+<div class="app-footer">灵感落 · AI 文创策划助手 — 判断与路径由 AI 生成，提交或使用前请自行核实。</div>
+""",
+    unsafe_allow_html=True,
+)
