@@ -68,7 +68,14 @@ with st.sidebar:
         help=f"在 {cfg['hint']} 创建 API Key 后填入。",
     )
     model = st.selectbox("模型", cfg["models"], index=0)
-    temperature = st.slider("创造性（temperature）", 0.0, 1.5, 0.6, 0.1)
+    temperature = st.slider(
+        "创造性（temperature）",
+        0.0,
+        1.5,
+        1.0,
+        0.1,
+        help="控制输出风格的创造性与发散程度：数值越高，表达越有创意、越跳跃；数值越低，越保守、越稳定。快速验证想法时建议保持 1；需要更严谨的策划案可调低到 0.5 左右。",
+    )
     st.markdown(
         f"还没有 Key？去 [{cfg['hint']}](https://{cfg['hint']}) 注册开发者账号。"
     )
